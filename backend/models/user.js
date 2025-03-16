@@ -24,29 +24,33 @@
  *           description: Дата создания пользователя
  */
 
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
 
-const User = sequelize.define('User', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
+const User = sequelize.define(
+  "User",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false, // Имя пользователя обязательно
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false, // Email пользователя обязателен
+      unique: true, // Email должен быть уникальным
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+    },
   },
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false // Имя пользователя обязательно
-  },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false, // Email пользователя обязателен
-    unique: true      // Email должен быть уникальным
-  },
-  createdAt: {
-    type: DataTypes.DATE
+  {
+    tableName: "users", // Явное указание имени таблицы
   }
-}, {
-  tableName: 'users' // Явное указание имени таблицы
-});
+);
 
 module.exports = User;

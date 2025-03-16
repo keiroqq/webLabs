@@ -1,6 +1,6 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const User = require('../models/user');
+const User = require("../models/user");
 
 /**
  * @swagger
@@ -53,31 +53,33 @@ const User = require('../models/user');
  *                   type: string
  *                   example: "Ошибка сервера"
  */
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { name, email } = req.body;
 
     // Проверка наличия обязательных полей
     if (!name || !email) {
-      return res.status(400).json({ message: 'Необходимо указать имя и email' });
+      return res
+        .status(400)
+        .json({ message: "Необходимо указать имя и email" });
     }
 
     // Проверка уникальности email
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      return res.status(400).json({ message: 'Email уже используется' });
+      return res.status(400).json({ message: "Email уже используется" });
     }
 
     // Создание пользователя
     const newUser = await User.create({
       name,
-      email
+      email,
     });
 
     res.status(201).json(newUser);
   } catch (error) {
-    console.error('Ошибка при создании пользователя:', error);
-    res.status(500).json({ message: 'Ошибка сервера' });
+    console.error("Ошибка при создании пользователя:", error);
+    res.status(500).json({ message: "Ошибка сервера" });
   }
 });
 
@@ -107,13 +109,13 @@ router.post('/', async (req, res) => {
  *                   type: string
  *                   example: "Ошибка сервера"
  */
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const users = await User.findAll();
     res.status(200).json(users);
   } catch (error) {
-    console.error('Ошибка при получении списка пользователей:', error);
-    res.status(500).json({ message: 'Ошибка сервера' });
+    console.error("Ошибка при получении списка пользователей:", error);
+    res.status(500).json({ message: "Ошибка сервера" });
   }
 });
 

@@ -1,8 +1,59 @@
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 const express = require("express");
 const router = express.Router();
 const Event = require("../models/event"); // Импортируем модель Event
+const User = require("../models/user");
 const { Op } = require("sequelize"); // Импортируем Op
-const User = require("../models/user"); // Импортируем модель User
+
+const checkEventLimit = async (req, res, next) => {
+  try {
+    const userId = req.body.createdBy; // Получаем ID пользователя из тела запроса
+
+    // Проверяем, передан ли ID пользователя
+    if (!userId) {
+      return res.status(400).json({ message: "Не указан ID пользователя" });
+    }
+
+    const now = new Date();
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    ); // Начало сегодняшнего дня
+    const endOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1
+    ); // Начало следующего дня
+
+    // Считаем количество событий, созданных пользователем за последние 24 часа
+    const eventsCount = await Event.count({
+      where: {
+        createdBy: userId,
+        createdAt: {
+          [Op.gte]: startOfDay, // Больше или равно начала сегодняшнего дня
+          [Op.lt]: endOfDay, // Меньше начала следующего дня
+        },
+      },
+    });
+
+    const maxEventsPerDay = parseInt(process.env.MAX_EVENTS_PER_DAY); // Получаем лимит из .env
+
+    // Проверяем, не превышен ли лимит
+    if (eventsCount >= maxEventsPerDay) {
+      return res.status(429).json({
+        message: `Превышен лимит (${maxEventsPerDay}) создаваемых мероприятий в день`,
+      }); // HTTP 429 Too Many Requests
+    }
+
+    // Если лимит не превышен, передаем управление следующему middleware или роуту
+    next();
+  } catch (error) {
+    console.error("Ошибка при проверке лимита:", error);
+    res.status(500).json({ message: "Ошибка сервера" });
+  }
+};
 
 /**
  * @swagger
@@ -30,26 +81,26 @@ const User = require("../models/user"); // Импортируем модель U
  *                   type: string
  *                   example: "Ошибка сервера"
  */
-router.get('/', async (req, res) => {
-    try {
-      const { category } = req.query; // Получаем категорию из query parameters
-  
-      let where = {}; // Создаем объект для условий фильтрации
-  
-      if (category) {
-        where.category = { [Op.eq]: category }; // Добавляем условие для фильтрации по категории
-      }
-  
-      const events = await Event.findAll({
-        where: where // Передаем условия фильтрации в метод findAll
-      });
-  
-      res.status(200).json(events);
-    } catch (error) {
-      console.error('Ошибка при получении мероприятий:', error);
-      res.status(500).json({ message: 'Ошибка сервера' });
+router.get("/", async (req, res) => {
+  try {
+    const { category } = req.query; // Получаем категорию из query parameters
+
+    let where = {}; // Создаем объект для условий фильтрации
+
+    if (category) {
+      where.category = { [Op.eq]: category }; // Добавляем условие для фильтрации по категории
     }
-  });
+
+    const events = await Event.findAll({
+      where: where, // Передаем условия фильтрации в метод findAll
+    });
+
+    res.status(200).json(events);
+  } catch (error) {
+    console.error("Ошибка при получении мероприятий:", error);
+    res.status(500).json({ message: "Ошибка сервера" });
+  }
+});
 
 /**
  * @swagger
@@ -138,17 +189,26 @@ router.get("/:id", async (req, res) => {
  *       500:
  *         description: Ошибка сервера
  */
-router.post("/", async (req, res) => {
+router.post("/", checkEventLimit, async (req, res) => {
   try {
-    const { createdBy } = req.body;
+    const { title, description, date, createdBy, category } = req.body;
 
     // Проверяем существование пользователя
     const user = await User.findByPk(createdBy);
     if (!user) {
-      return res.status(404).json({ message: "Пользователь с указанным ID не существует" });
+      return res
+        .status(404)
+        .json({ message: "Пользователь с указанным ID не существует" });
     }
 
-    const newEvent = await Event.create(req.body);
+    // Создание мероприятия
+    const newEvent = await Event.create({
+      title,
+      description,
+      date,
+      createdBy,
+      category,
+    });
     res.status(201).json(newEvent);
   } catch (error) {
     console.error("Ошибка при создании мероприятия:", error);
