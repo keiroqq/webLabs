@@ -4,102 +4,29 @@ const User = require("../models/user");
 
 /**
  * @swagger
- * /users:
- *   post:
- *     summary: Создание нового пользователя
- *     description: Создает нового пользователя в системе
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - email
- *             properties:
- *               name:
- *                 type: string
- *                 description: Имя пользователя
- *               email:
- *                 type: string
- *                 format: email
- *                 description: Email пользователя
- *     responses:
- *       201:
- *         description: Пользователь успешно создан
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
- *       400:
- *         description: Ошибка валидации
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Необходимо указать имя и email"
- *       500:
- *         description: Ошибка сервера
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Ошибка сервера"
+ * tags:
+ *   name: Users
+ *   description: Операции с пользователями (получение списка)
  */
-router.post("/", async (req, res) => {
-  try {
-    const { name, email } = req.body;
-
-    // Проверка наличия обязательных полей
-    if (!name || !email) {
-      return res
-        .status(400)
-        .json({ message: "Необходимо указать имя и email" });
-    }
-
-    // Проверка уникальности email
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email уже используется" });
-    }
-
-    // Создание пользователя
-    const newUser = await User.create({
-      name,
-      email,
-    });
-
-    res.status(201).json(newUser);
-  } catch (error) {
-    console.error("Ошибка при создании пользователя:", error);
-    res.status(500).json({ message: "Ошибка сервера" });
-  }
-});
 
 /**
  * @swagger
  * /users:
  *   get:
  *     summary: Получение списка всех пользователей
- *     description: Возвращает список всех пользователей из базы данных
+ *     tags: [Users] # Привязываем эндпоинт к тегу Users
+ *     description: Возвращает массив всех зарегистрированных пользователей из базы данных. Поле `password` исключается из ответа.
  *     responses:
  *       200:
- *         description: Успешный ответ
+ *         description: Успешный ответ со списком пользователей.
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/User'
+ *                 $ref: '#/components/schemas/User' # Ссылка на схему User (которая определена в models/user.js и не содержит пароль)
  *       500:
- *         description: Ошибка сервера
+ *         description: Внутренняя ошибка сервера.
  *         content:
  *           application/json:
  *             schema:
@@ -107,15 +34,19 @@ router.post("/", async (req, res) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Ошибка сервера"
+ *                   example: "Ошибка сервера при получении пользователей"
  */
 router.get("/", async (req, res) => {
   try {
-    const users = await User.findAll();
+    const users = await User.findAll({
+      attributes: ["id", "name", "email", "createdAt"],
+    });
     res.status(200).json(users);
   } catch (error) {
     console.error("Ошибка при получении списка пользователей:", error);
-    res.status(500).json({ message: "Ошибка сервера" });
+    res
+      .status(500)
+      .json({ message: "Ошибка сервера при получении пользователей" });
   }
 });
 

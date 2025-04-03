@@ -26,6 +26,7 @@
 
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
+const bcrypt = require("bcryptjs");
 
 const User = sequelize.define(
   "User",
@@ -37,20 +38,37 @@ const User = sequelize.define(
     },
     name: {
       type: DataTypes.STRING,
-      allowNull: false, // Имя пользователя обязательно
+      allowNull: false,
     },
     email: {
       type: DataTypes.STRING,
-      allowNull: false, // Email пользователя обязателен
-      unique: true, // Email должен быть уникальным
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true,
+      },
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     createdAt: {
       type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
   },
   {
-    tableName: "users", // Явное указание имени таблицы
+    tableName: "users",
+    timestamps: true,
+    updatedAt: false,
   }
 );
+
+User.beforeCreate(async (user, options) => {
+  if (user.password) {
+    const saltRounds = 10;
+    user.password = await bcrypt.hash(user.password, saltRounds);
+  }
+});
 
 module.exports = User;

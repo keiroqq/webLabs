@@ -6,3 +6,5 @@ node_modules/
 backend/node_modules/
 .env
 backend/.env
+README.md
+*.7z
