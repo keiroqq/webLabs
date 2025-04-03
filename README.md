@@ -17,9 +17,11 @@ npm install swagger-jsdoc swagger-ui-express
 
 Настройка переменных окружения в .env файле
 Создать .env в корне backend и объявить следующее:
+PORT=
 DB_NAME=
 DB_USER=
 DB_PASSWORD=
 DB_HOST=
 DB_PORT=
 MAX_EVENTS_PER_DAY=
+JWT_SECRET=
