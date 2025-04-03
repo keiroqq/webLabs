@@ -8,6 +8,7 @@ const authRoutes = require("./routes/auth");
 const swaggerDocs = require("./config/swagger");
 const Event = require("./models/event");
 const User = require("./models/user");
+const BlacklistedToken = require("./models/blacklistedToken");
 const morgan = require("morgan");
 const passport = require("./config/passport");
 
@@ -37,10 +38,10 @@ sequelize
     return sequelize.authenticate();
   })
   .then(() => {
-    console.log("Подключение к базе данных установлено.");
-    app.listen(port, () => {
-      console.log(`Сервер запущен на порту ${port}`);
-    });
+     console.log("Подключение к базе данных установлено.");
+     app.listen(port, () => {
+       console.log(`Сервер запущен на порту ${port}`);
+     });
   })
   .catch((err) => {
     console.error("Ошибка при инициализации приложения:", err);

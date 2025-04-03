@@ -2,7 +2,7 @@ const { Strategy: JwtStrategy, ExtractJwt } = require("passport-jwt");
 const passport = require("passport");
 const User = require("../models/user");
 const dotenv = require("dotenv");
-const path = require("path");
+const path = require("path"); //для .env
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 

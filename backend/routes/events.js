@@ -6,8 +6,9 @@ const Event = require("../models/event");
 const User = require("../models/user");
 const { Op } = require("sequelize");
 const passport = require("passport");
-
 const authenticateJwt = passport.authenticate("jwt", { session: false });
+const checkBlacklist = require("../middleware/checkBlacklist");
+
 const checkEventLimit = async (req, res, next) => {
   try {
     const userId = req.user ? req.user.id : null;
@@ -33,6 +34,7 @@ const checkEventLimit = async (req, res, next) => {
       now.getMonth(),
       now.getDate() + 1
     );
+
     const eventsCount = await Event.count({
       where: {
         createdBy: userId,
@@ -107,7 +109,7 @@ router.get("/", async (req, res) => {
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
+ *           type: integer # Тип данных параметра - целое число
  *         description: Уникальный идентификатор (ID) мероприятия для получения # Описание параметра
  *     responses:
  *       200:
@@ -156,7 +158,7 @@ router.get("/:id", async (req, res) => {
  * /events:
  *   post:
  *     summary: Создание нового мероприятия (Защищено)
- *     tags: [Events]
+ *     tags: [Events] # Добавляем тег
  *     description: Создает новое мероприятие. Требуется аутентификация (JWT Bearer Token). Проверяет дневной лимит на создание мероприятий.
  *     security:
  *       - bearerAuth: []
@@ -165,6 +167,7 @@ router.get("/:id", async (req, res) => {
  *       content:
  *         application/json:
  *           schema:
+ *             # Убираем createdBy из схемы запроса, т.к. он берется из токена
  *             type: object
  *             required:
  *               - title
@@ -181,9 +184,11 @@ router.get("/:id", async (req, res) => {
  *               category:
  *                 type: string
  *                 enum: [concert, lecture, exhibition]
+ *           # $ref: '#/components/schemas/Event' - Можно убрать ref и определить явно без createdBy
  *     responses:
  *       201:
  *         description: Мероприятие успешно создано
+ *         # ... (content schema: $ref: '#/components/schemas/Event') ...
  *       400:
  *         description: Ошибка валидации данных (например, не указаны обязательные поля)
  *       401:
@@ -195,37 +200,44 @@ router.get("/:id", async (req, res) => {
  *       500:
  *         description: Ошибка сервера
  */
-router.post("/", authenticateJwt, checkEventLimit, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { title, description, date, category } = req.body;
-    if (!title || !date || !category) {
-      return res
-        .status(400)
-        .json({ message: "Необходимо указать title, date и category" });
-    }
+router.post(
+  "/",
+  checkBlacklist,
+  authenticateJwt,
+  checkEventLimit,
+  async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { title, description, date, category } = req.body;
 
-    const newEvent = await Event.create({
-      title,
-      description,
-      date,
-      createdBy: userId,
-      category,
-    });
-    res.status(201).json(newEvent);
-  } catch (error) {
-    if (error.name === "SequelizeValidationError") {
-      const messages = error.errors.map((err) => err.message);
-      return res
-        .status(400)
-        .json({ message: `Ошибка валидации: ${messages.join(", ")}` });
+      if (!title || !date || !category) {
+        return res
+          .status(400)
+          .json({ message: "Необходимо указать title, date и category" });
+      }
+
+      const newEvent = await Event.create({
+        title,
+        description,
+        date,
+        createdBy: userId,
+        category,
+      });
+      res.status(201).json(newEvent);
+    } catch (error) {
+      if (error.name === "SequelizeValidationError") {
+        const messages = error.errors.map((err) => err.message);
+        return res
+          .status(400)
+          .json({ message: `Ошибка валидации: ${messages.join(", ")}` });
+      }
+      console.error("Ошибка при создании мероприятия:", error);
+      res
+        .status(500)
+        .json({ message: "Ошибка сервера при создании мероприятия" });
     }
-    console.error("Ошибка при создании мероприятия:", error);
-    res
-      .status(500)
-      .json({ message: "Ошибка сервера при создании мероприятия" });
   }
-});
+);
 
 /**
  * @swagger
@@ -263,6 +275,7 @@ router.post("/", authenticateJwt, checkEventLimit, async (req, res) => {
  *     responses:
  *       200:
  *         description: Мероприятие успешно обновлено
+ *         # ... (content schema: $ref: '#/components/schemas/Event') ...
  *       400:
  *         description: Ошибка валидации данных
  *       401:
@@ -274,7 +287,7 @@ router.post("/", authenticateJwt, checkEventLimit, async (req, res) => {
  *       500:
  *         description: Ошибка сервера
  */
-router.put("/:id", authenticateJwt, async (req, res) => {
+router.put("/:id", checkBlacklist, authenticateJwt, async (req, res) => {
   try {
     const eventId = req.params.id;
     const userId = req.user.id;
@@ -293,6 +306,7 @@ router.put("/:id", authenticateJwt, async (req, res) => {
             "Доступ запрещен: вы не являетесь создателем этого мероприятия",
         });
     }
+
     const { title, description, date, category } = req.body;
     const updateData = { title, description, date, category };
 
@@ -348,7 +362,8 @@ router.put("/:id", authenticateJwt, async (req, res) => {
  *       500:
  *         description: Ошибка сервера
  */
-router.delete("/:id", authenticateJwt, async (req, res) => {
+// Применяем authenticateJwt перед обработчиком
+router.delete("/:id", checkBlacklist, authenticateJwt, async (req, res) => {
   try {
     const eventId = req.params.id;
     const userId = req.user.id;

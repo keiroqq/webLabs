@@ -7,6 +7,7 @@
  *       required:
  *         - name
  *         - email
+ *         # Убрали password из required в Swagger, т.к. он нужен только для создания
  *       properties:
  *         id:
  *           type: integer
@@ -26,7 +27,7 @@
 
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
-const bcrypt = require("bcryptjs");
+const bcrypt = require('bcryptjs');
 
 const User = sequelize.define(
   "User",
@@ -54,7 +55,7 @@ const User = sequelize.define(
     },
     createdAt: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
+      defaultValue: DataTypes.NOW
     },
   },
   {

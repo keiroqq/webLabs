@@ -24,7 +24,7 @@ const User = require("../models/user");
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/User' # Ссылка на схему User (которая определена в models/user.js и не содержит пароль)
+ *                 $ref: '#/components/schemas/User'
  *       500:
  *         description: Внутренняя ошибка сервера.
  *         content:
