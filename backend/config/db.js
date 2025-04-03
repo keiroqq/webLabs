@@ -21,7 +21,6 @@ async function testConnection() {
     console.log("Connection has been established successfully.");
   } catch (error) {
     console.error("Unable to connect to the database:", error);
-    // Добавляем больше информации об ошибке
     console.error("Error details:", {
       name: error.name,
       message: error.message,

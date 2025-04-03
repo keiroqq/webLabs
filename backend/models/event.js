@@ -40,7 +40,7 @@ const Event = sequelize.define(
     },
     title: {
       type: DataTypes.STRING,
-      allowNull: false, // Название мероприятия обязательно
+      allowNull: false,
     },
     description: {
       type: DataTypes.TEXT,
@@ -50,15 +50,15 @@ const Event = sequelize.define(
     },
     category: {
       type: DataTypes.ENUM("concert", "lecture", "exhibition"),
-      allowNull: false, // Категория обязательна
+      allowNull: false,
     },
     createdBy: {
-      type: DataTypes.INTEGER, // Внешний ключ для пользователя
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
   },
   {
-    tableName: "events", // Явное указание имени таблицы
+    tableName: "events",
   }
 );
 
