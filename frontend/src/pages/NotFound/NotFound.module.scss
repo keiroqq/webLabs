@@ -1,0 +1,62 @@
+.notFoundContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+  padding: 40px 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.errorCode {
+  font-size: 6rem;
+  font-weight: bold;
+  color: #555;
+  margin: 0;
+  line-height: 1;
+}
+
+.title {
+  font-size: 1.8rem;
+  color: #e0e0e0;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.message {
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+  max-width: 500px;
+}
+
+.homeLink {
+  display: inline-block;
+  padding: 10px 25px;
+  background-color: #646cff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+  border: none;
+
+  &:hover {
+    background-color: #535bf2;
+  }
+}
+
+@media (max-width: 768px) {
+  .errorCode {
+    font-size: 5rem;
+  }
+  .title {
+    font-size: 1.5rem;
+  }
+  .message {
+    font-size: 1rem;
+  }
+}

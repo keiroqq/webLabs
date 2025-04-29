@@ -1,0 +1,31 @@
+.registerPageContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+  padding: 40px 20px;
+  width: 100%;
+}
+
+.successMessage {
+  background-color: #2f2f2f;
+  padding: 30px 40px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  border-left: 5px solid #4caf50;
+
+  h2 {
+    color: #81c784;
+    margin-bottom: 15px;
+  }
+
+  p {
+    color: #bdbdbd;
+    line-height: 1.6;
+    &:last-of-type {
+      margin-top: 10px;
+      font-style: italic;
+    }
+  }
+}
