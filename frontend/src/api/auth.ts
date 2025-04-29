@@ -1,4 +1,4 @@
-import { LoginResponse, FrontendUser } from '../types/user';
+import { LoginResponse } from '../types/user';
 import apiClient from './axios';
 import axios from 'axios';
 
@@ -13,51 +13,64 @@ interface RegisterCredentials {
   password?: string;
 }
 
-export const registerUser = async (credentials: RegisterCredentials): Promise<{ message: string }> => {
-   try {
-      const response = await apiClient.post<{ message: string }>('/auth/register', credentials);
-      return response.data;
-   } catch (error) {
-      console.error('Ошибка при регистрации (axios):', error);
-      let errorMessage = 'Произошла неизвестная ошибка при регистрации.';
-       if (axios.isAxiosError(error)) {
-         if (error.response) {
-           errorMessage = error.response.data?.message || `Ошибка ${error.response.status}: ${error.response.statusText}`;
-         } else if (error.request) {
-           errorMessage = 'Не удалось подключиться к серверу.';
-         } else {
-           errorMessage = `Ошибка настройки запроса: ${error.message}`;
-         }
-       } else if (error instanceof Error) {
-          errorMessage = error.message;
-       }
-       throw new Error(errorMessage);
-   }
-}
-
-export const loginUser = async (credentials: LoginCredentials): Promise<LoginResponse> => {
+export const registerUser = async (
+  credentials: RegisterCredentials,
+): Promise<{ message: string }> => {
   try {
-    const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
+    const response = await apiClient.post<{ message: string }>(
+      '/auth/register',
+      credentials,
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Ошибка при регистрации (axios):', error);
+    let errorMessage = 'Произошла неизвестная ошибка при регистрации.';
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Ошибка ${error.response.status}: ${error.response.statusText}`;
+      } else if (error.request) {
+        errorMessage = 'Не удалось подключиться к серверу.';
+      } else {
+        errorMessage = `Ошибка настройки запроса: ${error.message}`;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(errorMessage);
+  }
+};
+
+export const loginUser = async (
+  credentials: LoginCredentials,
+): Promise<LoginResponse> => {
+  try {
+    const response = await apiClient.post<LoginResponse>(
+      '/auth/login',
+      credentials,
+    );
 
     if (!response.data || !response.data.token || !response.data.user) {
-        console.error("Invalid login response structure (axios):", response.data);
-        throw new Error("Некорректный ответ от сервера при входе.");
+      console.error('Invalid login response structure (axios):', response.data);
+      throw new Error('Некорректный ответ от сервера при входе.');
     }
     return response.data;
-
   } catch (error) {
     console.error('Ошибка при входе (axios):', error);
     let errorMessage = 'Произошла неизвестная ошибка при входе.';
     if (axios.isAxiosError(error)) {
-        if (error.response) {
-            errorMessage = error.response.data?.message || `Ошибка ${error.response.status}: ${error.response.statusText}`;
-        } else if (error.request) {
-            errorMessage = 'Не удалось подключиться к серверу.';
-        } else {
-            errorMessage = `Ошибка настройки запроса: ${error.message}`;
-        }
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Ошибка ${error.response.status}: ${error.response.statusText}`;
+      } else if (error.request) {
+        errorMessage = 'Не удалось подключиться к серверу.';
+      } else {
+        errorMessage = `Ошибка настройки запроса: ${error.message}`;
+      }
     } else if (error instanceof Error) {
-        errorMessage = error.message;
+      errorMessage = error.message;
     }
     throw new Error(errorMessage);
   }
@@ -71,30 +84,38 @@ export const logoutUser = async (token: string | null): Promise<void> => {
   const actualToken = token.startsWith('Bearer ') ? token.split(' ')[1] : token;
 
   try {
-    await apiClient.post('/auth/logout', {}, {
-      headers: {
-        'Authorization': `Bearer ${actualToken}`,
+    await apiClient.post(
+      '/auth/logout',
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${actualToken}`,
+        },
       },
-    });
-
+    );
   } catch (error) {
     console.error('Ошибка при выходе (axios):', error);
     let shouldThrow = true;
 
-     if (axios.isAxiosError(error)) {
-       if (error.response?.status === 401) {
-           console.warn('Logout API вернул 401 (токен невалиден/аннулирован). Игнорируем ошибку.');
-           shouldThrow = false;
-       } else if (error.response) {
-          const serverMessage = error.response.data?.message || error.response.statusText;
-          console.error(`Logout failed with status ${error.response.status}: ${serverMessage}`);
-       } else if (error.request) {
-          console.error('Logout failed: No response from server.');
-       }
-     }
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401) {
+        console.warn(
+          'Logout API вернул 401 (токен невалиден/аннулирован). Игнорируем ошибку.',
+        );
+        shouldThrow = false;
+      } else if (error.response) {
+        const serverMessage =
+          error.response.data?.message || error.response.statusText;
+        console.error(
+          `Logout failed with status ${error.response.status}: ${serverMessage}`,
+        );
+      } else if (error.request) {
+        console.error('Logout failed: No response from server.');
+      }
+    }
 
-     if(shouldThrow) {
-         throw new Error('Не удалось выполнить выход на сервере.');
-     }
+    if (shouldThrow) {
+      throw new Error('Не удалось выполнить выход на сервере.');
+    }
   }
 };

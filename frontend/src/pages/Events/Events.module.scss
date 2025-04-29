@@ -34,9 +34,53 @@
   border-radius: 5px;
 }
 
+.filterContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 25px;
+  padding: 10px 0;
+  border-bottom: 1px solid #444;
+}
+
+.filterLabel {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  margin-right: 10px;
+}
+
+.filterButton {
+  padding: 6px 15px;
+  border: 1px solid #666;
+  background-color: #3a3a3a;
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: 15px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+  font-size: 0.9rem;
+
+  &:hover {
+    background-color: #4f4f4f;
+    border-color: #888;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  &.activeFilter {
+    background-color: #646cff;
+    color: white;
+    border-color: #646cff;
+    font-weight: 600;
+  }
+}
+
 .eventsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  // grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
   width: 100%;
 }
@@ -55,7 +99,7 @@
   }
 }
 @media (max-width: 480px) {
-   .eventsGrid {
-       grid-template-columns: 1fr;
-   }
+  .eventsGrid {
+    grid-template-columns: 1fr;
+  }
 }

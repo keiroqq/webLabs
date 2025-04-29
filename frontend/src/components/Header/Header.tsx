@@ -19,7 +19,9 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated, user, onLogout }) => {
         {isAuthenticated && user ? (
           <>
             <span className={styles.userName}>Привет, {user.name}!</span>
-            <button onClick={onLogout} className={styles.logoutButton}>Выйти</button>
+            <button onClick={onLogout} className={styles.logoutButton}>
+              Выйти
+            </button>
           </>
         ) : (
           <>

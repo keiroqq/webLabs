@@ -29,7 +29,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess }) => {
       const response = await registerUser({ name, email, password });
       console.log('Registration successful via API (axios):', response.message);
       onRegisterSuccess();
-
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -37,16 +36,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess }) => {
         setError('Произошла неизвестная ошибка при регистрации.');
       }
       console.error('Registration failed (axios):', err);
-
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-     <form className={styles.registerForm} onSubmit={handleSubmit}>
-         <h2>Регистрация</h2>
-         {error && <p className={styles.errorMessage}>{error}</p>}
+    <form className={styles.registerForm} onSubmit={handleSubmit}>
+      <h2>Регистрация</h2>
+      {error && <p className={styles.errorMessage}>{error}</p>}
       <div className={styles.formGroup}>
         <label htmlFor="name">Имя:</label>
         <input

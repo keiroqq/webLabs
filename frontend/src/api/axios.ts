@@ -4,7 +4,7 @@ const baseURL = import.meta.env.VITE_API_BASE_URL;
 
 if (!baseURL) {
   console.error(
-    'VITE_API_BASE_URL не определена в .env! Укажите базовый URL API.'
+    'VITE_API_BASE_URL не определена в .env! Укажите базовый URL API.',
   );
   throw new Error('VITE_API_BASE_URL is not defined');
 }
@@ -15,7 +15,7 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
-  timeout: 5000
+  timeout: 5000,
 });
 
 // Интерцептор запросов

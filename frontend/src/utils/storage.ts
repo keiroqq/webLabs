@@ -46,12 +46,15 @@ export const removeToken = (): void => {
 export const saveUserInfo = (user: FrontendUser): void => {
   try {
     if (!user) {
-        console.warn("Попытка сохранить null или undefined пользователя.");
-        return;
+      console.warn('Попытка сохранить null или undefined пользователя.');
+      return;
     }
     localStorage.setItem(USER_INFO_KEY, JSON.stringify(user));
   } catch (error) {
-    console.error('Ошибка при сохранении информации о пользователе в localStorage:', error);
+    console.error(
+      'Ошибка при сохранении информации о пользователе в localStorage:',
+      error,
+    );
   }
 };
 
@@ -67,20 +70,29 @@ export const getUserInfo = (): FrontendUser | null => {
     }
     try {
       const user = JSON.parse(userInfoString) as FrontendUser;
-      if (user && typeof user === 'object' && user.id && user.name && user.email) {
-          return user;
+      if (
+        user &&
+        typeof user === 'object' &&
+        user.id &&
+        user.name &&
+        user.email
+      ) {
+        return user;
       } else {
-          console.warn('Некорректная структура userInfo в localStorage:', user);
-          removeUserInfo();
-          return null;
+        console.warn('Некорректная структура userInfo в localStorage:', user);
+        removeUserInfo();
+        return null;
       }
     } catch (parseError) {
-       console.error('Ошибка парсинга userInfo из localStorage:', parseError);
-       removeUserInfo();
-       return null;
+      console.error('Ошибка парсинга userInfo из localStorage:', parseError);
+      removeUserInfo();
+      return null;
     }
   } catch (error) {
-    console.error('Ошибка при получении информации о пользователе из localStorage:', error);
+    console.error(
+      'Ошибка при получении информации о пользователе из localStorage:',
+      error,
+    );
     return null;
   }
 };
@@ -92,15 +104,17 @@ export const removeUserInfo = (): void => {
   try {
     localStorage.removeItem(USER_INFO_KEY);
   } catch (error) {
-    console.error('Ошибка при удалении информации о пользователе из localStorage:', error);
+    console.error(
+      'Ошибка при удалении информации о пользователе из localStorage:',
+      error,
+    );
   }
 };
-
 
 /**
  * Проверяет, аутентифицирован ли пользователь (наличие токена).
  * @returns true, если токен есть, иначе false.
  */
 export const isAuthenticated = (): boolean => {
-    return !!getToken();
+  return !!getToken();
 };

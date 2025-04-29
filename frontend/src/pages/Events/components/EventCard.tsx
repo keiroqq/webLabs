@@ -9,13 +9,15 @@ interface EventCardProps {
 const formatDate = (dateString: string): string => {
   try {
     const date = new Date(dateString);
-    return date.toLocaleString('ru-RU', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).replace(' г.', '');
+    return date
+      .toLocaleString('ru-RU', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+      .replace(' г.', '');
   } catch (e) {
     console.error('Invalid date format:', dateString);
     return 'Неверная дата';
@@ -34,7 +36,11 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
       </div>
       <div className={styles.cardFooter}>
         <span className={styles.category}>{event.category}</span>
-        <button className={styles.editButton} onClick={() => alert(`Редактировать ${event.id}`)} disabled>
+        <button
+          className={styles.editButton}
+          onClick={() => alert(`Редактировать ${event.id}`)}
+          disabled
+        >
           Редактировать
         </button>
       </div>

@@ -10,7 +10,7 @@ import {
   getUserInfo,
   removeToken,
   removeUserInfo,
-  isAuthenticated
+  isAuthenticated,
 } from '../../utils/storage';
 import styles from './Layout.module.scss';
 
@@ -18,8 +18,11 @@ const Layout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [isAuthenticatedState, setIsAuthenticatedState] = useState<boolean>(isAuthenticated);
-  const [currentUser, setCurrentUser] = useState<FrontendUser | null>(getUserInfo());
+  const [isAuthenticatedState, setIsAuthenticatedState] =
+    useState<boolean>(isAuthenticated);
+  const [currentUser, setCurrentUser] = useState<FrontendUser | null>(
+    getUserInfo(),
+  );
   const [logoutError, setLogoutError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,12 +51,12 @@ const Layout: React.FC = () => {
     const token = getToken();
     console.log('Attempting logout with token (from util):', !!token);
     try {
-       if (token) {
-           await logoutUser(token);
-           console.log('Logout successful via API.');
-       } else {
-           console.warn("Local token not found, skipping API logout call.");
-       }
+      if (token) {
+        await logoutUser(token);
+        console.log('Logout successful via API.');
+      } else {
+        console.warn('Local token not found, skipping API logout call.');
+      }
     } catch (error) {
       console.error('Logout failed:', error);
       if (error instanceof Error) {
@@ -67,12 +70,12 @@ const Layout: React.FC = () => {
         }
       }
     } finally {
-        console.log('Performing local logout (removing token and user info)...');
-        removeToken();
-        removeUserInfo();
-        setIsAuthenticatedState(false);
-        setCurrentUser(null);
-        navigate('/login');
+      console.log('Performing local logout (removing token and user info)...');
+      removeToken();
+      removeUserInfo();
+      setIsAuthenticatedState(false);
+      setCurrentUser(null);
+      navigate('/login');
     }
   };
 
@@ -84,7 +87,9 @@ const Layout: React.FC = () => {
         onLogout={handleLogout}
       />
       <main className={styles.mainContent}>
-        {logoutError && <p className={styles.logoutErrorMessage}>{logoutError}</p>}
+        {logoutError && (
+          <p className={styles.logoutErrorMessage}>{logoutError}</p>
+        )}
         <Outlet />
       </main>
       <Footer />
