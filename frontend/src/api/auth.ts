@@ -52,7 +52,7 @@ export const loginUser = async (
     );
 
     if (!response.data || !response.data.token || !response.data.user) {
-      console.error('Invalid login response structure (axios):', response.data);
+      console.error('Неверная структура ответа при входе (axios):', response.data);
       throw new Error('Некорректный ответ от сервера при входе.');
     }
     return response.data;
@@ -107,10 +107,10 @@ export const logoutUser = async (token: string | null): Promise<void> => {
         const serverMessage =
           error.response.data?.message || error.response.statusText;
         console.error(
-          `Logout failed with status ${error.response.status}: ${serverMessage}`,
+          `Ошибка при выходе, статус ${error.response.status}: ${serverMessage}`,
         );
       } else if (error.request) {
-        console.error('Logout failed: No response from server.');
+        console.error('Ошибка при выходе: нет ответа от сервера');
       }
     }
 

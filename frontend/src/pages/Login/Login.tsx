@@ -2,27 +2,21 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoginForm from './components/LoginForm';
 import styles from './Login.module.scss';
-
-const checkAuthStatus = (): boolean => {
-  return !!localStorage.getItem('authToken');
-};
+import { useAppSelector } from '../../app/hooks';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   useEffect(() => {
-    if (checkAuthStatus()) {
-      console.log('User already authenticated, redirecting to /events');
+    if (isAuthenticated) {
+      console.log('User already authenticated (from Redux state), redirecting...');
       navigate('/events', { replace: true });
     }
-  }, [navigate]);
-  const handleLoginSuccess = () => {
-    console.log('Login successful on page level, navigating to /events');
-    navigate('/events');
-  };
+  }, [isAuthenticated, navigate]);
 
   return (
     <div className={styles.loginPageContainer}>
-      <LoginForm onLoginSuccess={handleLoginSuccess} />
+      <LoginForm/>
     </div>
   );
 };

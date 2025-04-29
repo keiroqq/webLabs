@@ -1,0 +1,46 @@
+.pageContainer {
+    padding: 20px 30px;
+    width: 100%;
+    max-width: 800px;
+    margin: 20px auto;
+    flex-grow: 1;
+  }
+  
+  .pageTitle {
+    font-size: 2rem;
+    color: #ffffff;
+    margin-bottom: 25px;
+    text-align: center;
+    border-bottom: 1px solid #444;
+    padding-bottom: 15px;
+  }
+  
+  .loadingMessage,
+  .error {
+    text-align: center;
+    font-size: 1.1rem;
+    margin-top: 30px;
+    padding: 20px;
+    border-radius: 5px;
+  }
+  
+  .loadingMessage {
+     color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .error {
+    color: #ff8080;
+    background-color: rgba(255, 0, 0, 0.1);
+    border: 1px solid rgba(255, 0, 0, 0.3);
+  }
+  
+  @media (max-width: 768px) {
+    .pageContainer {
+      padding-left: 15px;
+      padding-right: 15px;
+      max-width: 95%;
+    }
+     .pageTitle {
+      font-size: 1.8rem;
+    }
+  }

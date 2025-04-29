@@ -10,3 +10,10 @@ export interface FrontendEvent {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface EventCreationData {
+  title: string;
+  description?: string | null;
+  date: string;
+  category: EventCategory;
+}
