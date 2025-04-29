@@ -32,7 +32,7 @@ apiClient.interceptors.request.use(
   (error) => {
     console.error('Axios request interceptor error:', error);
     return Promise.reject(error);
-  }
+  },
 );
 
 apiClient.interceptors.response.use(
@@ -40,29 +40,28 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error: AxiosError | Error) => {
-    if (axios.isAxiosError(error)) {
-        console.error('Axios error response:', error.response?.status, error.response?.data);
-        if (error.response?.status === 401) {
-           console.warn('Unauthorized (401) detected by interceptor. Logging out.');
-           if (window.location.pathname !== '/login') {
-               removeToken();
-               removeUserInfo();
-               try {
-                   store.dispatch(logout());
-               } catch (e) {
-                   console.error("Failed to dispatch logout action from interceptor:", e);
-               }
-               window.location.href = '/login';
-           }
-           return Promise.reject(new Error('Сессия истекла или недействительна.'));
-        }
+    if (axios.isAxiosError(error) && error.response) {
+      console.error('Axios error response:', error.response.status, error.response.data, 'for URL:', error.config?.url);
 
+      const originalRequestUrl = error.config?.url;
+      const isLoginRequest = originalRequestUrl?.endsWith('/auth/login');
+
+      if (error.response.status === 401 && !isLoginRequest) {
+         console.warn(`Unauthorized (401) for non-login request (${originalRequestUrl}). Logging out.`);
+         if (window.location.pathname !== '/login') {
+             removeToken();
+             removeUserInfo();
+             try { store.dispatch(logout()); } catch (e) { console.error("Dispatch logout failed:", e); }
+             window.location.href = '/login';
+         }
+         return Promise.reject(new Error('Сессия истекла или недействительна. Пожалуйста, войдите снова.'));
+      }
     } else {
-        console.error('Unexpected error in response interceptor:', error);
+      console.error('Unexpected error in response interceptor:', error);
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;

@@ -52,7 +52,10 @@ export const loginUser = async (
     );
 
     if (!response.data || !response.data.token || !response.data.user) {
-      console.error('Неверная структура ответа при входе (axios):', response.data);
+      console.error(
+        'Неверная структура ответа при входе (axios):',
+        response.data,
+      );
       throw new Error('Некорректный ответ от сервера при входе.');
     }
     return response.data;

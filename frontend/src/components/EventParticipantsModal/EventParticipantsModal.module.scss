@@ -1,0 +1,107 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: #2f2f2f;
+  color: rgba(255, 255, 255, 0.87);
+  padding: 25px 30px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  outline: none;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #444;
+
+  h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #e0e0e0;
+  }
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 1.8rem;
+  line-height: 1;
+  padding: 0 5px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #fff;
+  }
+}
+
+.modalBody {
+  p {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+.participantsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    padding: 8px 0;
+    border-bottom: 1px solid #444;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+.participantName {
+  font-weight: 500;
+  color: #c0c0c0;
+}
+
+.participantEmail {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+@media (max-width: 600px) {
+  .modalContent {
+    padding: 20px;
+    width: 95%;
+  }
+  .modalHeader h2 {
+    font-size: 1.2rem;
+  }
+  .participantsList li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+}

@@ -9,14 +9,16 @@ const Login: React.FC = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('User already authenticated (from Redux state), redirecting...');
+      console.log(
+        'User already authenticated (from Redux state), redirecting...',
+      );
       navigate('/events', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
   return (
     <div className={styles.loginPageContainer}>
-      <LoginForm/>
+      <LoginForm />
     </div>
   );
 };

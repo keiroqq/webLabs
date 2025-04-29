@@ -1,13 +1,21 @@
 import React, { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { clearEventsError, fetchEventsThunk, setFilterCategory } from '../../features/events/eventsSlice';
+import {
+  clearEventsError,
+  fetchEventsThunk,
+  setFilterCategory,
+} from '../../features/events/eventsSlice';
 import type { EventCategory } from '../../types/event';
 import EventCard from './components/EventCard';
 import Spinner from '../../components/Spinner/Spinner';
 import ErrorNotification from '../../components/ErrorNotification/ErrorNotification';
 import styles from './Events.module.scss';
 
-const availableCategories: EventCategory[] = ['concert', 'lecture', 'exhibition'];
+const availableCategories: EventCategory[] = [
+  'concert',
+  'lecture',
+  'exhibition',
+];
 type FilterCategory = EventCategory | null;
 
 const Events: React.FC = () => {
@@ -16,8 +24,8 @@ const Events: React.FC = () => {
     items: events,
     isLoading,
     error,
-    filterCategory: selectedCategory
-   } = useAppSelector((state) => state.events);
+    filterCategory: selectedCategory,
+  } = useAppSelector((state) => state.events);
 
   useEffect(() => {
     dispatch(clearEventsError());
@@ -29,12 +37,16 @@ const Events: React.FC = () => {
   };
 
   const getCategoryDisplayName = (category: EventCategory): string => {
-     switch(category) {
-         case 'concert': return 'Концерты';
-         case 'lecture': return 'Лекции';
-         case 'exhibition': return 'Выставки';
-         default: return category;
-     }
+    switch (category) {
+      case 'concert':
+        return 'Концерты';
+      case 'lecture':
+        return 'Лекции';
+      case 'exhibition':
+        return 'Выставки';
+      default:
+        return category;
+    }
   };
 
   return (
@@ -42,22 +54,35 @@ const Events: React.FC = () => {
       <h1 className={styles.pageTitle}>Список мероприятий</h1>
 
       <div className={styles.filterContainer}>
-         <span className={styles.filterLabel}>Фильтр:</span>
-         <button onClick={() => handleCategoryChange(null)} className={`${styles.filterButton} ${selectedCategory === null ? styles.activeFilter : ''}`}>Все</button>
-         {availableCategories.map((category) => ( <button key={category} onClick={() => handleCategoryChange(category)} className={`${styles.filterButton} ${selectedCategory === category ? styles.activeFilter : ''}`}> {getCategoryDisplayName(category)} </button>))}
+        <span className={styles.filterLabel}>Фильтр:</span>
+        <button
+          onClick={() => handleCategoryChange(null)}
+          className={`${styles.filterButton} ${selectedCategory === null ? styles.activeFilter : ''}`}
+        >
+          Все
+        </button>
+        {availableCategories.map((category) => (
+          <button
+            key={category}
+            onClick={() => handleCategoryChange(category)}
+            className={`${styles.filterButton} ${selectedCategory === category ? styles.activeFilter : ''}`}
+          >
+            {' '}
+            {getCategoryDisplayName(category)}{' '}
+          </button>
+        ))}
       </div>
 
       {isLoading && <Spinner message="Загрузка мероприятий..." />}
       <ErrorNotification
-          message={error}
-          onClearError={() => dispatch(clearEventsError())}
+        message={error}
+        onClearError={() => dispatch(clearEventsError())}
       />
       {!isLoading && events.length === 0 && !error && (
         <p className={styles.noEventsMessage}>
-            {selectedCategory
-                ? `Мероприятий в категории "${getCategoryDisplayName(selectedCategory)}" не найдено.`
-                : 'Мероприятий пока нет.'
-            }
+          {selectedCategory
+            ? `Мероприятий в категории "${getCategoryDisplayName(selectedCategory)}" не найдено.`
+            : 'Мероприятий пока нет.'}
         </p>
       )}
       {!isLoading && events.length > 0 && !error && (

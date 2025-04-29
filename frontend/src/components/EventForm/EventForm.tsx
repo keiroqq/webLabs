@@ -20,7 +20,7 @@ const EventForm: React.FC<EventFormProps> = ({
   onSubmit,
   isLoading = false,
   error = null,
-  onClearError
+  onClearError,
 }) => {
   const {
     register,
@@ -33,8 +33,8 @@ const EventForm: React.FC<EventFormProps> = ({
       title: initialData?.title || '',
       description: initialData?.description || '',
       date: initialData?.date
-          ? new Date(initialData.date).toISOString().slice(0, 16)
-          : '',
+        ? new Date(initialData.date).toISOString().slice(0, 16)
+        : '',
       category: initialData?.category || categories[0],
     },
   });
@@ -48,27 +48,29 @@ const EventForm: React.FC<EventFormProps> = ({
         category: initialData.category,
       });
     } else {
-         reset({
-            title: '',
-            description: '',
-            date: '',
-            category: categories[0]
-         });
+      reset({
+        title: '',
+        description: '',
+        date: '',
+        category: categories[0],
+      });
     }
   }, [initialData, reset]);
 
   const handleFormSubmit: SubmitHandler<EventFormData> = (data) => {
-     console.log("Form data submitted:", data);
-     onSubmit(data);
+    console.log('Form data submitted:', data);
+    onSubmit(data);
   };
 
-
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className={styles.eventForm}>
+    <form
+      onSubmit={handleSubmit(handleFormSubmit)}
+      className={styles.eventForm}
+    >
       <ErrorNotification
-          message={error}
-          title="Ошибка отправки"
-          onClearError={onClearError}
+        message={error}
+        title="Ошибка отправки"
+        onClearError={onClearError}
       />
 
       <div className={styles.formGroup}>
@@ -78,9 +80,11 @@ const EventForm: React.FC<EventFormProps> = ({
           type="text"
           {...register('title', { required: 'Название обязательно' })}
           disabled={isLoading}
-          aria-invalid={formErrors.title ? "true" : "false"}
+          aria-invalid={formErrors.title ? 'true' : 'false'}
         />
-        {formErrors.title && <p className={styles.error}>{formErrors.title.message}</p>}
+        {formErrors.title && (
+          <p className={styles.error}>{formErrors.title.message}</p>
+        )}
       </div>
 
       <div className={styles.formGroup}>
@@ -99,13 +103,16 @@ const EventForm: React.FC<EventFormProps> = ({
           id="date"
           type="datetime-local"
           {...register('date', {
-              required: 'Дата и время обязательны',
-               validate: value => new Date(value) > new Date() || 'Дата не может быть в прошлом'
-            })}
+            required: 'Дата и время обязательны',
+            validate: (value) =>
+              new Date(value) > new Date() || 'Дата не может быть в прошлом',
+          })}
           disabled={isLoading}
-          aria-invalid={formErrors.date ? "true" : "false"}
+          aria-invalid={formErrors.date ? 'true' : 'false'}
         />
-         {formErrors.date && <p className={styles.error}>{formErrors.date.message}</p>}
+        {formErrors.date && (
+          <p className={styles.error}>{formErrors.date.message}</p>
+        )}
       </div>
 
       <div className={styles.formGroup}>
@@ -115,7 +122,12 @@ const EventForm: React.FC<EventFormProps> = ({
           control={control}
           rules={{ required: 'Категория обязательна' }}
           render={({ field }) => (
-            <select {...field} id="category" disabled={isLoading} aria-invalid={formErrors.category ? "true" : "false"}>
+            <select
+              {...field}
+              id="category"
+              disabled={isLoading}
+              aria-invalid={formErrors.category ? 'true' : 'false'}
+            >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -124,15 +136,21 @@ const EventForm: React.FC<EventFormProps> = ({
             </select>
           )}
         />
-         {formErrors.category && <p className={styles.error}>{formErrors.category.message}</p>}
+        {formErrors.category && (
+          <p className={styles.error}>{formErrors.category.message}</p>
+        )}
       </div>
 
       <div className={styles.formActions}>
-         <button type="submit" disabled={isLoading}>
-           {isLoading
-             ? (initialData ? 'Сохранение...' : 'Создание...')
-             : (initialData ? 'Сохранить изменения' : 'Создать мероприятие')}
-         </button>
+        <button type="submit" disabled={isLoading}>
+          {isLoading
+            ? initialData
+              ? 'Сохранение...'
+              : 'Создание...'
+            : initialData
+              ? 'Сохранить изменения'
+              : 'Создать мероприятие'}
+        </button>
       </div>
     </form>
   );

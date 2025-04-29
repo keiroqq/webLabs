@@ -1,7 +1,10 @@
 import React, { useState, FormEvent, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { loginUserThunk, clearAuthError } from '../../../features/auth/authSlice';
+import {
+  loginUserThunk,
+  clearAuthError,
+} from '../../../features/auth/authSlice';
 import ErrorNotification from '../../../components/ErrorNotification/ErrorNotification';
 import styles from './LoginForm.module.scss';
 
@@ -11,7 +14,9 @@ const LoginForm: React.FC = () => {
   const navigate = useNavigate();
 
   const dispatch = useAppDispatch();
-  const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { isLoading, error, isAuthenticated } = useAppSelector(
+    (state) => state.auth,
+  );
 
   useEffect(() => {
     dispatch(clearAuthError());
@@ -19,11 +24,12 @@ const LoginForm: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('Login successful (detected by isAuthenticated state), navigating...');
+      console.log(
+        'Login successful (detected by isAuthenticated state), navigating...',
+      );
       navigate('/events');
     }
   }, [isAuthenticated, navigate]);
-
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -35,8 +41,8 @@ const LoginForm: React.FC = () => {
     <form className={styles.loginForm} onSubmit={handleSubmit}>
       <h2>Вход в систему</h2>
       <ErrorNotification
-          message={error}
-          onClearError={() => dispatch(clearAuthError())}
+        message={error}
+        onClearError={() => dispatch(clearAuthError())}
       />
       <div className={styles.formGroup}>
         <label htmlFor="email">Email:</label>

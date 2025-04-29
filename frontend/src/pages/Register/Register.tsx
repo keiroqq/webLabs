@@ -28,9 +28,9 @@ const Register: React.FC = () => {
     <div className={styles.registerPageContainer}>
       {showSuccessMessage ? (
         <div className={styles.successMessage}>
-           <h2>Регистрация успешна!</h2>
-           <p>Теперь вы можете войти в систему.</p>
-           <p>Перенаправление на страницу входа...</p>
+          <h2>Регистрация успешна!</h2>
+          <p>Теперь вы можете войти в систему.</p>
+          <p>Перенаправление на страницу входа...</p>
         </div>
       ) : (
         <RegisterForm onRegisterSuccess={handleRegisterSuccess} />

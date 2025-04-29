@@ -7,7 +7,7 @@ import {
   updateEventThunk,
   clearEditableEvent,
   clearSubmittingError,
-  clearEventsError
+  clearEventsError,
 } from '../../features/events/eventsSlice';
 import EventForm from '../../components/EventForm/EventForm';
 import Spinner from '../../components/Spinner/Spinner';
@@ -26,27 +26,26 @@ const EventFormPage: React.FC = () => {
     isLoadingEditable,
     errorEditable,
     isSubmitting,
-    submittingError
-   } = useAppSelector((state) => state.events);
+    submittingError,
+  } = useAppSelector((state) => state.events);
 
   useEffect(() => {
     dispatch(clearSubmittingError());
-    if(errorEditable) dispatch(clearEventsError());
+    if (errorEditable) dispatch(clearEventsError());
 
     if (isEditMode && id) {
       dispatch(clearEditableEvent());
       dispatch(fetchEventByIdThunk(id));
     } else {
-       dispatch(clearEditableEvent());
+      dispatch(clearEditableEvent());
     }
 
     return () => {
-        dispatch(clearEditableEvent());
-        dispatch(clearSubmittingError());
-         if(errorEditable) dispatch(clearEventsError());
+      dispatch(clearEditableEvent());
+      dispatch(clearSubmittingError());
+      if (errorEditable) dispatch(clearEventsError());
     };
   }, [id, isEditMode, dispatch, errorEditable]);
-
 
   const handleFormSubmit = (data: EventFormData) => {
     dispatch(clearSubmittingError());
@@ -64,46 +63,52 @@ const EventFormPage: React.FC = () => {
   };
 
   if (isEditMode && isLoadingEditable) {
-    return <div className={styles.pageContainer}><Spinner message="Загрузка данных мероприятия..." /></div>;
+    return (
+      <div className={styles.pageContainer}>
+        <Spinner message="Загрузка данных мероприятия..." />
+      </div>
+    );
   }
 
   if (isEditMode && errorEditable) {
-     return (
-         <div className={styles.pageContainer}>
-             <ErrorNotification
-                 title="Ошибка загрузки"
-                 message={errorEditable}
-                 onClearError={() => dispatch(clearEventsError())}
-             />
-         </div>
-     );
+    return (
+      <div className={styles.pageContainer}>
+        <ErrorNotification
+          title="Ошибка загрузки"
+          message={errorEditable}
+          onClearError={() => dispatch(clearEventsError())}
+        />
+      </div>
+    );
   }
 
   if (isEditMode && !isLoadingEditable && !editableEvent) {
     return (
-        <div className={styles.pageContainer}>
-             <ErrorNotification
-                 title="Ошибка"
-                 message="Мероприятие для редактирования не найдено."
-             />
-         </div>
-     );
+      <div className={styles.pageContainer}>
+        <ErrorNotification
+          title="Ошибка"
+          message="Мероприятие для редактирования не найдено."
+        />
+      </div>
+    );
   }
 
- return (
-   <div className={styles.pageContainer}>
-     <h1 className={styles.pageTitle}>
-       {isEditMode ? 'Редактирование мероприятия' : 'Создание нового мероприятия'}
-     </h1>
-     <EventForm
-       initialData={isEditMode ? editableEvent : null}
-       onSubmit={handleFormSubmit}
-       isLoading={isSubmitting}
-       error={submittingError}
-       onClearError={() => dispatch(clearSubmittingError())}
-     />
-   </div>
- );
+  return (
+    <div className={styles.pageContainer}>
+      <h1 className={styles.pageTitle}>
+        {isEditMode
+          ? 'Редактирование мероприятия'
+          : 'Создание нового мероприятия'}
+      </h1>
+      <EventForm
+        initialData={isEditMode ? editableEvent : null}
+        onSubmit={handleFormSubmit}
+        isLoading={isSubmitting}
+        error={submittingError}
+        onClearError={() => dispatch(clearSubmittingError())}
+      />
+    </div>
+  );
 };
 
 export default EventFormPage;

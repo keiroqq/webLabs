@@ -24,9 +24,8 @@ const App: React.FC = () => {
           <Route path="event/new" element={<EventFormPage />} />
           <Route path="event/:id/edit" element={<EventFormPage />} />
         </Route>
-        
-        <Route path="*" element={<NotFound />} />
 
+        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
   );

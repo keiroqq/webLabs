@@ -1,4 +1,9 @@
-import type { FrontendEvent, EventCategory, EventCreationData } from '../types/event';
+import type {
+  FrontendEvent,
+  EventCategory,
+  EventCreationData,
+} from '../types/event';
+import type { Participant } from '../types/event';
 import apiClient from './axios';
 import axios from 'axios';
 
@@ -43,77 +48,242 @@ export const fetchEvents = async (
 export const fetchUserEvents = async (): Promise<FrontendEvent[]> => {
   console.log("Attempting to fetch user's events...");
   try {
-      const response = await apiClient.get<FrontendEvent[]>('/events/my');
-      console.log("User events fetched successfully:", response.data);
-      return response.data;
+    const response = await apiClient.get<FrontendEvent[]>('/events/my');
+    console.log('User events fetched successfully:', response.data);
+    return response.data;
   } catch (error) {
-      console.error('Ошибка при получении мероприятий пользователя (axios):', error);
-      let errorMessage = 'Произошла неизвестная ошибка при загрузке ваших мероприятий';
-      if (axios.isAxiosError(error)) {
-          if (error.response) {
-              errorMessage = error.response.data?.message || `Ошибка ${error.response.status}: ${error.response.statusText}`;
-          } else if (error.request) {
-              errorMessage = 'Не удалось подключиться к серверу.';
-          } else {
-              errorMessage = `Ошибка настройки запроса: ${error.message}`;
-          }
-      } else if (error instanceof Error) {
-          errorMessage = error.message;
+    console.error(
+      'Ошибка при получении мероприятий пользователя (axios):',
+      error,
+    );
+    let errorMessage =
+      'Произошла неизвестная ошибка при загрузке ваших мероприятий';
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Ошибка ${error.response.status}: ${error.response.statusText}`;
+      } else if (error.request) {
+        errorMessage = 'Не удалось подключиться к серверу.';
+      } else {
+        errorMessage = `Ошибка настройки запроса: ${error.message}`;
       }
-      throw new Error(errorMessage);
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(errorMessage);
   }
 };
 
-export const fetchEventById = async (id: string | number): Promise<FrontendEvent> => {
+export const fetchEventById = async (
+  id: string | number,
+): Promise<FrontendEvent> => {
   console.log(`Attempting to fetch event by ID: ${id}`);
   try {
-      const response = await apiClient.get<FrontendEvent>(`/events/${id}`);
-      return response.data;
+    const response = await apiClient.get<FrontendEvent>(`/events/${id}`);
+    return response.data;
   } catch (error) {
-      console.error(`Ошибка при получении события ID ${id} (axios):`, error);
-      let errorMessage = 'Произошла неизвестная ошибка при загрузке события';
-      if (axios.isAxiosError(error)) { if (error.response) { errorMessage = error.response.data?.message || `Ошибка ${error.response.status}: ${error.response.statusText}`; } else if (error.request) { errorMessage = 'Не удалось подключиться к серверу.'; } else { errorMessage = `Ошибка настройки запроса: ${error.message}`; } } else if (error instanceof Error) { errorMessage = error.message; }
-      throw new Error(errorMessage);
+    console.error(`Ошибка при получении события ID ${id} (axios):`, error);
+    let errorMessage = 'Произошла неизвестная ошибка при загрузке события';
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Ошибка ${error.response.status}: ${error.response.statusText}`;
+      } else if (error.request) {
+        errorMessage = 'Не удалось подключиться к серверу.';
+      } else {
+        errorMessage = `Ошибка настройки запроса: ${error.message}`;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(errorMessage);
   }
 };
 
-export const createEvent = async (eventData: EventFormData): Promise<FrontendEvent> => {
-  console.log("Attempting to create event:", eventData);
+export const createEvent = async (
+  eventData: EventFormData,
+): Promise<FrontendEvent> => {
+  console.log('Attempting to create event:', eventData);
   try {
-      const response = await apiClient.post<FrontendEvent>('/events', eventData);
-      console.log("Event created successfully:", response.data);
-      return response.data;
+    const response = await apiClient.post<FrontendEvent>('/events', eventData);
+    console.log('Event created successfully:', response.data);
+    return response.data;
   } catch (error) {
-      console.error('Ошибка при создании события (axios):', error);
-      let errorMessage = 'Произошла неизвестная ошибка при создании события';
-      if (axios.isAxiosError(error)) { if (error.response) { errorMessage = error.response.data?.message || `Ошибка ${error.response.status}: ${error.response.statusText}`; } else if (error.request) { errorMessage = 'Не удалось подключиться к серверу.'; } else { errorMessage = `Ошибка настройки запроса: ${error.message}`; } } else if (error instanceof Error) { errorMessage = error.message; }
-      throw new Error(errorMessage);
+    console.error('Ошибка при создании события (axios):', error);
+    let errorMessage = 'Произошла неизвестная ошибка при создании события';
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Ошибка ${error.response.status}: ${error.response.statusText}`;
+      } else if (error.request) {
+        errorMessage = 'Не удалось подключиться к серверу.';
+      } else {
+        errorMessage = `Ошибка настройки запроса: ${error.message}`;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(errorMessage);
   }
 };
 
-export const updateEvent = async (id: string | number, eventData: Partial<EventFormData>): Promise<FrontendEvent> => {
+export const updateEvent = async (
+  id: string | number,
+  eventData: Partial<EventFormData>,
+): Promise<FrontendEvent> => {
   console.log(`Attempting to update event ID ${id}:`, eventData);
- try {
-     const response = await apiClient.put<FrontendEvent>(`/events/${id}`, eventData);
-      console.log("Event updated successfully:", response.data);
-     return response.data;
+  try {
+    const response = await apiClient.put<FrontendEvent>(
+      `/events/${id}`,
+      eventData,
+    );
+    console.log('Event updated successfully:', response.data);
+    return response.data;
   } catch (error) {
-      console.error(`Ошибка при обновлении события ID ${id} (axios):`, error);
-      let errorMessage = 'Произошла неизвестная ошибка при обновлении события';
-      if (axios.isAxiosError(error)) { if (error.response) { errorMessage = error.response.data?.message || `Ошибка ${error.response.status}: ${error.response.statusText}`; } else if (error.request) { errorMessage = 'Не удалось подключиться к серверу.'; } else { errorMessage = `Ошибка настройки запроса: ${error.message}`; } } else if (error instanceof Error) { errorMessage = error.message; }
-      throw new Error(errorMessage);
+    console.error(`Ошибка при обновлении события ID ${id} (axios):`, error);
+    let errorMessage = 'Произошла неизвестная ошибка при обновлении события';
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Ошибка ${error.response.status}: ${error.response.statusText}`;
+      } else if (error.request) {
+        errorMessage = 'Не удалось подключиться к серверу.';
+      } else {
+        errorMessage = `Ошибка настройки запроса: ${error.message}`;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(errorMessage);
   }
 };
 
 export const deleteEvent = async (id: string | number): Promise<void> => {
   console.log(`Attempting to delete event ID ${id}`);
   try {
-      await apiClient.delete(`/events/${id}`);
-      console.log("Event deleted successfully");
+    await apiClient.delete(`/events/${id}`);
+    console.log('Event deleted successfully');
   } catch (error) {
-      console.error(`Ошибка при удалении события ID ${id} (axios):`, error);
-      let errorMessage = 'Произошла неизвестная ошибка при удалении события';
-       if (axios.isAxiosError(error)) { if (error.response) { errorMessage = error.response.data?.message || `Ошибка ${error.response.status}: ${error.response.statusText}`; } else if (error.request) { errorMessage = 'Не удалось подключиться к серверу.'; } else { errorMessage = `Ошибка настройки запроса: ${error.message}`; } } else if (error instanceof Error) { errorMessage = error.message; }
-      throw new Error(errorMessage);
+    console.error(`Ошибка при удалении события ID ${id} (axios):`, error);
+    let errorMessage = 'Произошла неизвестная ошибка при удалении события';
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Ошибка ${error.response.status}: ${error.response.statusText}`;
+      } else if (error.request) {
+        errorMessage = 'Не удалось подключиться к серверу.';
+      } else {
+        errorMessage = `Ошибка настройки запроса: ${error.message}`;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(errorMessage);
+  }
+};
+
+export const registerForEvent = async (
+  eventId: string | number,
+): Promise<FrontendEvent> => {
+  console.log(`Attempting to register for event ID: ${eventId}`);
+  try {
+    const response = await apiClient.post<FrontendEvent>(
+      `/events/${eventId}/register`,
+    );
+    console.log('Successfully registered for event:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Ошибка при регистрации на событие ID ${eventId} (axios):`,
+      error,
+    );
+    let errorMessage =
+      'Произошла неизвестная ошибка при регистрации на событие';
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Ошибка ${error.response.status}: ${error.response.statusText}`;
+      } else if (error.request) {
+        errorMessage = 'Не удалось подключиться к серверу.';
+      } else {
+        errorMessage = `Ошибка настройки запроса: ${error.message}`;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(errorMessage);
+  }
+};
+
+export const unregisterFromEvent = async (
+  eventId: string | number,
+): Promise<FrontendEvent> => {
+  console.log(`Attempting to unregister from event ID: ${eventId}`);
+  try {
+    const response = await apiClient.delete<FrontendEvent>(
+      `/events/${eventId}/register`,
+    );
+    console.log('Successfully unregistered from event:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Ошибка при отмене регистрации на событие ID ${eventId} (axios):`,
+      error,
+    );
+    let errorMessage = 'Произошла неизвестная ошибка при отмене регистрации';
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Ошибка ${error.response.status}: ${error.response.statusText}`;
+      } else if (error.request) {
+        errorMessage = 'Не удалось подключиться к серверу.';
+      } else {
+        errorMessage = `Ошибка настройки запроса: ${error.message}`;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(errorMessage);
+  }
+};
+
+export const fetchEventParticipants = async (
+  eventId: string | number,
+): Promise<Participant[]> => {
+  console.log(`Attempting to fetch participants for event ID: ${eventId}`);
+  try {
+    const response = await apiClient.get<Participant[]>(
+      `/events/${eventId}/participants`,
+    );
+    console.log('Successfully fetched participants:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Ошибка при получении участников для события ID ${eventId} (axios):`,
+      error,
+    );
+    let errorMessage =
+      'Произошла неизвестная ошибка при получении списка участников';
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Ошибка ${error.response.status}: ${error.response.statusText}`;
+      } else if (error.request) {
+        errorMessage = 'Не удалось подключиться к серверу.';
+      } else {
+        errorMessage = `Ошибка настройки запроса: ${error.message}`;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(errorMessage);
   }
 };

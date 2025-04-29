@@ -5,19 +5,24 @@ import Footer from '../Footer/Footer';
 import { logoutUserThunk, clearAuthError } from '../../features/auth/authSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import ErrorNotification from '../ErrorNotification/ErrorNotification';
+import EventParticipantsModal from '../EventParticipantsModal/EventParticipantsModal';
 import styles from './Layout.module.scss';
 
 const Layout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
-  const { isAuthenticated, user, error: authError } = useAppSelector((state) => state.auth);
+  const {
+    isAuthenticated,
+    user,
+    error: authError,
+  } = useAppSelector((state) => state.auth);
 
   const handleLogout = async () => {
     dispatch(logoutUserThunk())
-        .unwrap()
-        .then(() => navigate('/login'))
-        .catch((err) => console.error('Logout thunk failed:', err));
+      .unwrap()
+      .then(() => navigate('/login'))
+      .catch((err) => console.error('Logout thunk failed:', err));
   };
 
   return (
@@ -28,15 +33,18 @@ const Layout: React.FC = () => {
         onLogout={handleLogout}
       />
       <main className={styles.mainContent}>
-        {authError && location.pathname !== '/login' && location.pathname !== '/register' && (
-             <ErrorNotification
-                 message={authError}
-                 onClearError={() => dispatch(clearAuthError())}
-             />
-        )}
+        {authError &&
+          location.pathname !== '/login' &&
+          location.pathname !== '/register' && (
+            <ErrorNotification
+              message={authError}
+              onClearError={() => dispatch(clearAuthError())}
+            />
+          )}
         <Outlet />
       </main>
       <Footer />
+      <EventParticipantsModal />
     </div>
   );
 };
