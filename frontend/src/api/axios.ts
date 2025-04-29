@@ -1,4 +1,7 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import { getToken, removeToken, removeUserInfo } from '../utils/storage';
+import { store } from '../app/store';
+import { logout } from '../features/auth/authSlice';
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -18,41 +21,47 @@ const apiClient = axios.create({
   timeout: 5000,
 });
 
-// Интерцептор запросов
-// apiClient.interceptors.request.use(
-//   (config) => {
-//     const token = localStorage.getItem('authToken'); // Или из утилиты storage
-//     if (token && config.headers) {
-//       config.headers['Authorization'] = token; // Используем токен из localStorage
-//     }
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = getToken();
+    if (token && config.headers) {
+      config.headers['Authorization'] = token;
+    }
+    return config;
+  },
+  (error) => {
+    console.error('Axios request interceptor error:', error);
+    return Promise.reject(error);
+  },
+);
 
-// Интерцептор ответов
-// apiClient.interceptors.response.use(
-//   (response) => {
-//     // Все статусы 2xx попадают сюда
-//     return response;
-//   },
-//   (error) => {
-//     // Статусы не из диапазона 2xx попадают сюда
-//     if (axios.isAxiosError(error)) {
-//         console.error('Axios error:', error.response?.status, error.response?.data);
-//         // Можно добавить обработку 401 (Unauthorized) для автоматического разлогина
-//         if (error.response?.status === 401) {
-//            console.log('Unauthorized, logging out...');
-//            // Здесь можно вызвать функцию для очистки localStorage и редиректа
-//            // logoutUserLocally(); // Условная функция
-//         }
-//     } else {
-//         console.error('Unexpected error:', error);
-//     }
-//     return Promise.reject(error); // Важно пробросить ошибку дальше
-//   }
-// );
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error: AxiosError | Error) => {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error('Axios error response:', error.response.status, error.response.data, 'for URL:', error.config?.url);
+
+      const originalRequestUrl = error.config?.url;
+      const isLoginRequest = originalRequestUrl?.endsWith('/auth/login');
+
+      if (error.response.status === 401 && !isLoginRequest) {
+         console.warn(`Unauthorized (401) for non-login request (${originalRequestUrl}). Logging out.`);
+         if (window.location.pathname !== '/login') {
+             removeToken();
+             removeUserInfo();
+             try { store.dispatch(logout()); } catch (e) { console.error("Dispatch logout failed:", e); }
+             window.location.href = '/login';
+         }
+         return Promise.reject(new Error('Сессия истекла или недействительна. Пожалуйста, войдите снова.'));
+      }
+    } else {
+      console.error('Unexpected error in response interceptor:', error);
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 export default apiClient;

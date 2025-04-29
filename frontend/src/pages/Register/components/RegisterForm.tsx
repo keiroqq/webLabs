@@ -1,6 +1,11 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { registerUser } from '../../../api/auth';
+import { useAppDispatch, useAppSelector } from '../../../app/hooks';
+import {
+  registerUserThunk,
+  clearAuthError,
+} from '../../../features/auth/authSlice';
+import ErrorNotification from '../../../components/ErrorNotification/ErrorNotification';
 import styles from './RegisterForm.module.scss';
 
 interface RegisterFormProps {
@@ -11,40 +16,40 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess }) => {
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const dispatch = useAppDispatch();
+  const { isLoading, error } = useAppSelector((state) => state.auth);
+
+  useEffect(() => {
+    dispatch(clearAuthError());
+  }, [dispatch]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsLoading(true);
-    setError(null);
 
     if (password.length < 6) {
-      setError('Пароль должен содержать не менее 6 символов.');
-      setIsLoading(false);
+      alert('Пароль должен содержать не менее 6 символов.');
       return;
     }
 
-    try {
-      const response = await registerUser({ name, email, password });
-      console.log('Registration successful via API (axios):', response.message);
-      onRegisterSuccess();
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Произошла неизвестная ошибка при регистрации.');
-      }
-      console.error('Registration failed (axios):', err);
-    } finally {
-      setIsLoading(false);
-    }
+    console.log('Dispatching registerUserThunk');
+    dispatch(registerUserThunk({ name, email, password }))
+      .unwrap()
+      .then(() => {
+        console.log('Register thunk fulfilled');
+        onRegisterSuccess();
+      })
+      .catch((err) => {
+        console.error('Register thunk rejected:', err);
+      });
   };
 
   return (
     <form className={styles.registerForm} onSubmit={handleSubmit}>
       <h2>Регистрация</h2>
-      {error && <p className={styles.errorMessage}>{error}</p>}
+      <ErrorNotification
+        message={error}
+        onClearError={() => dispatch(clearAuthError())}
+      />
       <div className={styles.formGroup}>
         <label htmlFor="name">Имя:</label>
         <input

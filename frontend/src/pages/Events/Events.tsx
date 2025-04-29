@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { fetchEvents } from '../../api/events';
-import type { FrontendEvent, EventCategory } from '../../types/event';
+import React, { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import {
+  clearEventsError,
+  fetchEventsThunk,
+  setFilterCategory,
+} from '../../features/events/eventsSlice';
+import type { EventCategory } from '../../types/event';
 import EventCard from './components/EventCard';
+import Spinner from '../../components/Spinner/Spinner';
+import ErrorNotification from '../../components/ErrorNotification/ErrorNotification';
 import styles from './Events.module.scss';
 
 const availableCategories: EventCategory[] = [
@@ -12,39 +19,21 @@ const availableCategories: EventCategory[] = [
 type FilterCategory = EventCategory | null;
 
 const Events: React.FC = () => {
-  const [events, setEvents] = useState<FrontendEvent[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] =
-    useState<FilterCategory>(null);
+  const dispatch = useAppDispatch();
+  const {
+    items: events,
+    isLoading,
+    error,
+    filterCategory: selectedCategory,
+  } = useAppSelector((state) => state.events);
 
   useEffect(() => {
-    const loadEvents = async () => {
-      console.log(`Effect triggered. Selected category: ${selectedCategory}`);
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await fetchEvents(selectedCategory);
-        setEvents(data);
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError('Произошла неизвестная ошибка');
-        }
-        console.error(err);
-        setEvents([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadEvents();
-  }, [selectedCategory]);
+    dispatch(clearEventsError());
+    dispatch(fetchEventsThunk(selectedCategory));
+  }, [selectedCategory, dispatch]);
 
   const handleCategoryChange = (category: FilterCategory) => {
-    console.log(`Category changed to: ${category}`);
-    setSelectedCategory(category);
+    dispatch(setFilterCategory(category));
   };
 
   const getCategoryDisplayName = (category: EventCategory): string => {
@@ -78,26 +67,25 @@ const Events: React.FC = () => {
             onClick={() => handleCategoryChange(category)}
             className={`${styles.filterButton} ${selectedCategory === category ? styles.activeFilter : ''}`}
           >
-            {getCategoryDisplayName(category)}
+            {' '}
+            {getCategoryDisplayName(category)}{' '}
           </button>
         ))}
       </div>
 
-      {loading && (
-        <p className={styles.loadingMessage}>Загрузка мероприятий...</p>
-      )}
-
-      {error && <p className={styles.errorMessage}>Ошибка: {error}</p>}
-
-      {!loading && !error && events.length === 0 && (
+      {isLoading && <Spinner message="Загрузка мероприятий..." />}
+      <ErrorNotification
+        message={error}
+        onClearError={() => dispatch(clearEventsError())}
+      />
+      {!isLoading && events.length === 0 && !error && (
         <p className={styles.noEventsMessage}>
           {selectedCategory
             ? `Мероприятий в категории "${getCategoryDisplayName(selectedCategory)}" не найдено.`
             : 'Мероприятий пока нет.'}
         </p>
       )}
-
-      {!loading && !error && events.length > 0 && (
+      {!isLoading && events.length > 0 && !error && (
         <div className={styles.eventsGrid}>
           {events.map((event) => (
             <EventCard key={event.id} event={event} />

@@ -1,26 +1,23 @@
-// src/pages/Register/Register.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RegisterForm from './components/RegisterForm';
 import styles from './Register.module.scss';
-
-const checkAuthStatus = (): boolean => {
-  return !!localStorage.getItem('authToken');
-};
+import { useAppSelector } from '../../app/hooks';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const [showSuccessMessage, setShowSuccessMessage] = useState<boolean>(false);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
   useEffect(() => {
-    if (checkAuthStatus()) {
+    if (isAuthenticated) {
       console.log('User already authenticated, redirecting to /events');
       navigate('/events', { replace: true });
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleRegisterSuccess = () => {
-    console.log('Registration successful on page level');
+    console.log('Registration successful callback received');
     setShowSuccessMessage(true);
     setTimeout(() => {
       navigate('/login');

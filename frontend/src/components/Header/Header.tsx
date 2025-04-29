@@ -18,7 +18,9 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated, user, onLogout }) => {
       <nav className={styles.navigation}>
         {isAuthenticated && user ? (
           <>
-            <span className={styles.userName}>Привет, {user.name}!</span>
+            <Link to="/profile" className={styles.profileLink}>
+              <span className={styles.userName}>Привет, {user.name}!</span>
+            </Link>
             <button onClick={onLogout} className={styles.logoutButton}>
               Выйти
             </button>

@@ -1,46 +1,49 @@
-import React, { useState, FormEvent } from 'react';
-import { Link } from 'react-router-dom';
-import { loginUser } from '../../../api/auth';
-import { saveToken, saveUserInfo } from '../../../utils/storage';
+import React, { useState, FormEvent, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../../../app/hooks';
+import {
+  loginUserThunk,
+  clearAuthError,
+} from '../../../features/auth/authSlice';
+import ErrorNotification from '../../../components/ErrorNotification/ErrorNotification';
 import styles from './LoginForm.module.scss';
 
-interface LoginFormProps {
-  onLoginSuccess: () => void;
-}
-
-const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
+const LoginForm: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
+
+  const dispatch = useAppDispatch();
+  const { isLoading, error, isAuthenticated } = useAppSelector(
+    (state) => state.auth,
+  );
+
+  useEffect(() => {
+    dispatch(clearAuthError());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log(
+        'Login successful (detected by isAuthenticated state), navigating...',
+      );
+      navigate('/events');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const loginData = await loginUser({ email, password });
-      saveToken(loginData.token);
-      saveUserInfo(loginData.user);
-      console.log('Login successful, token and user info stored.');
-      onLoginSuccess();
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Произошла неизвестная ошибка при входе.');
-      }
-      console.error('Login failed:', err);
-    } finally {
-      setIsLoading(false);
-    }
+    console.log('Dispatching loginUserThunk');
+    dispatch(loginUserThunk({ email, password }));
   };
 
   return (
     <form className={styles.loginForm} onSubmit={handleSubmit}>
       <h2>Вход в систему</h2>
-      {error && <p className={styles.errorMessage}>{error}</p>}
+      <ErrorNotification
+        message={error}
+        onClearError={() => dispatch(clearAuthError())}
+      />
       <div className={styles.formGroup}>
         <label htmlFor="email">Email:</label>
         <input
