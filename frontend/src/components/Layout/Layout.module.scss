@@ -1,0 +1,22 @@
+.layoutContainer {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .mainContent {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    width: 100%;
+  }
+
+  .logoutErrorMessage {
+    color: #ff8080;
+    background-color: rgba(255, 0, 0, 0.1);
+    border: 1px solid rgba(255, 0, 0, 0.3);
+    padding: 10px 15px;
+    margin: 10px 20px;
+    border-radius: 4px;
+    text-align: center;
+  }
