@@ -1,9 +1,18 @@
-import { Router, Request, Response, NextFunction, Handler } from 'express';
+import {
+  Router,
+  Request,
+  Response,
+  NextFunction,
+  Handler,
+  RequestHandler,
+} from 'express';
 import {
   Op,
-  WhereOptions,
   ValidationError,
   ValidationErrorItem,
+  fn,
+  col,
+  WhereOptions,
   Attributes,
 } from 'sequelize';
 import passport from 'passport';
@@ -11,6 +20,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 import Event, { EventAttributes } from '@models/event';
+import User from '@models/user';
+import EventParticipant from '@models/eventParticipant';
 import checkBlacklist from '@middleware/checkBlacklist';
 import '@config/passport.config';
 
@@ -98,6 +109,57 @@ interface UpdateEventBody {
   category?: Attributes<Event>['category'];
 }
 
+interface EventParticipantCount {
+  eventId: number;
+  participantsCount: string;
+}
+
+interface UserParticipation {
+  eventId: number;
+}
+
+const addParticipationInfo = async (
+  events: Event[],
+  currentUserId?: number,
+): Promise<EventAttributes[]> => {
+  const eventIds = events.map((e) => e.id);
+  if (eventIds.length === 0) return events.map((e) => e.get({ plain: true }));
+
+  const counts = (await EventParticipant.findAll({
+    attributes: ['eventId', [fn('COUNT', col('userId')), 'participantsCount']],
+    where: { eventId: eventIds },
+    group: ['eventId'],
+    raw: true,
+  })) as unknown as EventParticipantCount[];
+  const countsMap = new Map(
+    counts.map((c) => [c.eventId, parseInt(c.participantsCount, 10)]),
+  );
+
+  let participationMap = new Map<number, boolean>();
+  if (currentUserId) {
+    const participations = (await EventParticipant.findAll({
+      where: {
+        userId: currentUserId,
+        eventId: eventIds,
+      },
+      attributes: ['eventId'],
+      raw: true,
+    })) as unknown as UserParticipation[];
+    participationMap = new Map(participations.map((p) => [p.eventId, true]));
+  }
+
+  return events.map((event) => {
+    const eventPlain = event.get({ plain: true });
+    return {
+      ...eventPlain,
+      participantsCount: countsMap.get(event.id) || 0,
+      isCurrentUserParticipant: currentUserId
+        ? participationMap.get(event.id) || false
+        : false,
+    };
+  });
+};
+
 /**
  * @swagger
  * /events:
@@ -124,36 +186,99 @@ interface UpdateEventBody {
  *       500:
  *         description: Ошибка сервера
  */
-router.get('/', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const category = req.query.category as
-      | Attributes<Event>['category']
-      | undefined;
-    const where: WhereOptions<Attributes<Event>> = {};
-    if (category) {
-      const validCategories: Attributes<Event>['category'][] = [
-        'concert',
-        'lecture',
-        'exhibition',
-      ];
-      if (validCategories.includes(category)) {
-        where.category = category;
-      } else {
-        res
-          .status(400)
-          .json({ message: `Недопустимая категория: ${category}` });
+router.get('/', (req: Request, res: Response, next: NextFunction): void => {
+  passport.authenticate(
+    'jwt',
+    { session: false },
+    async (err: Error | null, user: User | false | null) => {
+      if (err) {
+        console.error('Ошибка аутентификации в GET /events:', err);
+      }
+      const currentUserId = user ? user.id : undefined;
+
+      try {
+        const category = req.query.category as
+          | EventAttributes['category']
+          | undefined;
+        const where: WhereOptions<EventAttributes> = {};
+        if (category) {
+          if (['concert', 'lecture', 'exhibition'].includes(category)) {
+            where.category = category;
+          } else {
+            res
+              .status(400)
+              .json({ message: `Недопустимая категория: ${category}` });
+            return;
+          }
+        }
+
+        const events = await Event.findAll({ where, order: [['date', 'ASC']] });
+        const eventsWithInfo = await addParticipationInfo(
+          events,
+          currentUserId,
+        );
+
+        res.status(200).json(eventsWithInfo);
+      } catch (error: unknown) {
+        console.error('Ошибка при получении мероприятий:', error);
+        if (!res.headersSent) {
+          res.status(500).json({ message: 'Ошибка сервера' });
+        }
+      }
+    },
+  )(req, res, next);
+});
+
+/**
+ * @swagger
+ * /events/my:
+ *   get:
+ *     summary: Получение списка мероприятий, созданных текущим пользователем
+ *     tags: [Events]
+ *     description: Возвращает массив мероприятий, где поле createdBy соответствует ID аутентифицированного пользователя.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Успешный ответ со списком мероприятий пользователя.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Event'
+ *       401:
+ *         description: Ошибка аутентификации.
+ *       500:
+ *         description: Внутренняя ошибка сервера.
+ */
+router.get(
+  '/my',
+  [checkBlacklist as RequestHandler, authenticateJwt as RequestHandler],
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const user = req.user as User | undefined;
+      if (!user || typeof user.id !== 'number') {
+        res.status(401).json({ message: 'Пользователь не аутентифицирован' });
         return;
       }
+      const userId = user.id;
+      const userEvents = await Event.findAll({
+        where: { createdBy: userId },
+        order: [['date', 'ASC']],
+      });
+      const eventsWithInfo = await addParticipationInfo(userEvents, userId);
+      res.status(200).json(eventsWithInfo);
+    } catch (error: unknown) {
+      console.error('Ошибка при получении мероприятий пользователя:', error);
+      if (!res.headersSent) {
+        res.status(500).json({
+          message: 'Ошибка сервера при получении мероприятий пользователя',
+        });
+      }
     }
-    const events: Event[] = await Event.findAll({ where });
-    res.status(200).json(events);
-  } catch (error: unknown) {
-    console.error('Ошибка при получении мероприятий:', error);
-    if (!res.headersSent) {
-      res.status(500).json({ message: 'Ошибка сервера' });
-    }
-  }
-});
+  },
+);
 
 /**
  * @swagger
@@ -181,26 +306,282 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
  *       500:
  *         description: Ошибка сервера
  */
-router.get('/:id', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const eventId = parseInt(req.params.id, 10);
-    if (isNaN(eventId)) {
-      res.status(400).json({ message: 'Некорректный ID мероприятия' });
-      return;
-    }
-    const event: Event | null = await Event.findByPk(eventId);
-    if (event) {
-      res.status(200).json(event);
-    } else {
-      res.status(404).json({ message: 'Мероприятие не найдено' });
-    }
-  } catch (error: unknown) {
-    console.error('Ошибка при получении мероприятия:', error);
-    if (!res.headersSent) {
-      res.status(500).json({ message: 'Ошибка сервера' });
-    }
-  }
+router.get('/:id', (req: Request, res: Response, next: NextFunction): void => {
+  passport.authenticate(
+    'jwt',
+    { session: false },
+    async (err: Error | null, user: User | false | null) => {
+      if (err) {
+        console.error('Ошибка аутентификации в GET /events/:id:', err);
+      }
+      const currentUserId = user ? user.id : undefined;
+
+      try {
+        const eventId = parseInt(req.params.id, 10);
+        if (isNaN(eventId)) {
+          res.status(400).json({ message: 'Некорректный ID мероприятия' });
+          return;
+        }
+        const event = await Event.findByPk(eventId);
+        if (!event) {
+          res.status(404).json({ message: 'Мероприятие не найдено' });
+          return;
+        }
+        const eventsWithInfo = await addParticipationInfo(
+          [event],
+          currentUserId,
+        );
+        res.status(200).json(eventsWithInfo[0]);
+      } catch (error: unknown) {
+        console.error('Ошибка при получении мероприятия:', error);
+        if (!res.headersSent) {
+          res
+            .status(500)
+            .json({ message: 'Ошибка сервера при получении мероприятия' });
+        }
+      }
+    },
+  )(req, res, next);
 });
+
+/**
+ * @swagger
+ * /events/{eventId}/participants:
+ *   get:
+ *     summary: Получение списка участников мероприятия
+ *     tags: [Events]
+ *     description: Возвращает массив пользователей (только id, name, email), зарегистрированных на указанное мероприятие.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID мероприятия, для которого нужно получить список участников
+ *     responses:
+ *       200:
+ *         description: Успешный ответ со списком участников.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Некорректный ID мероприятия.
+ *       401:
+ *         description: Ошибка аутентификации (если эндпоинт защищен).
+ *       404:
+ *         description: Мероприятие не найдено.
+ *       500:
+ *         description: Внутренняя ошибка сервера.
+ */
+router.get(
+  '/:eventId/participants',
+  [checkBlacklist as RequestHandler, authenticateJwt as RequestHandler],
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const eventId = parseInt(req.params.eventId, 10);
+      if (isNaN(eventId)) {
+        res.status(400).json({ message: 'Некорректный ID мероприятия' });
+        return;
+      }
+      const eventExists = await Event.findByPk(eventId, { attributes: ['id'] });
+      if (!eventExists) {
+        res.status(404).json({ message: 'Мероприятие не найдено' });
+        return;
+      }
+
+      const participants = await User.findAll({
+        attributes: ['id', 'name', 'email'],
+        include: [
+          {
+            model: EventParticipant,
+            attributes: [],
+            where: { eventId: eventId },
+            required: true,
+          },
+        ],
+        order: [['name', 'ASC']],
+      });
+      res.status(200).json(participants || []);
+    } catch (error: unknown) {
+      console.error(
+        `Ошибка при получении участников для события ID ${req.params.eventId}:`,
+        error,
+      );
+      if (!res.headersSent) {
+        res
+          .status(500)
+          .json({ message: 'Ошибка сервера при получении списка участников' });
+      }
+    }
+  },
+);
+
+/**
+ * @swagger
+ * /events/{eventId}/register:
+ *   post:
+ *     summary: Зарегистрировать текущего пользователя на мероприятие
+ *     tags: [Events]
+ *     description: Регистрирует аутентифицированного пользователя как участника указанного мероприятия. Нельзя зарегистрироваться на свое мероприятие.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID мероприятия для регистрации
+ *     responses:
+ *       201:
+ *         description: Пользователь успешно зарегистрирован на мероприятие
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EventWithParticipation'
+ *       400:
+ *         description: Некорректный ID мероприятия или пользователь уже зарегистрирован
+ *       401:
+ *         description: Пользователь не аутентифицирован
+ *       403:
+ *         description: Нельзя зарегистрироваться на собственное мероприятие
+ *       404:
+ *         description: Мероприятие не найдено
+ *       409:
+ *         description: Пользователь уже зарегистрирован на это мероприятие (Конфликт)
+ *       500:
+ *         description: Внутренняя ошибка сервера
+ */
+router.post(
+  '/:eventId/register',
+  [checkBlacklist as RequestHandler, authenticateJwt as RequestHandler],
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const user = req.user as User | undefined;
+      if (!user) {
+        res.status(401).json({ message: 'Не авторизован' });
+        return;
+      }
+      const userId = user.id;
+      const eventId = parseInt(req.params.eventId, 10);
+      if (isNaN(eventId)) {
+        res.status(400).json({ message: 'Некорректный ID мероприятия' });
+        return;
+      }
+      const event = await Event.findByPk(eventId);
+      if (!event) {
+        res.status(404).json({ message: 'Мероприятие не найдено' });
+        return;
+      }
+      if (event.createdBy === userId) {
+        res.status(403).json({
+          message: 'Нельзя зарегистрироваться на собственное мероприятие',
+        });
+        return;
+      }
+      const existingParticipation = await EventParticipant.findOne({
+        where: { userId, eventId },
+      });
+      if (existingParticipation) {
+        res
+          .status(409)
+          .json({ message: 'Вы уже зарегистрированы на это мероприятие' });
+        return;
+      }
+      await EventParticipant.create({ userId, eventId });
+      const updatedEvents = await addParticipationInfo([event], userId);
+      res.status(201).json(updatedEvents[0]);
+    } catch (error: unknown) {
+      console.error('Ошибка при регистрации на мероприятие:', error);
+      if (!res.headersSent) {
+        res
+          .status(500)
+          .json({ message: 'Ошибка сервера при регистрации на мероприятие' });
+      }
+    }
+  },
+);
+
+/**
+ * @swagger
+ * /events/{eventId}/register:
+ *   delete:
+ *     summary: Отменить регистрацию текущего пользователя на мероприятие
+ *     tags: [Events]
+ *     description: Отменяет регистрацию аутентифицированного пользователя на указанное мероприятие.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID мероприятия для отмены регистрации
+ *     responses:
+ *       200:
+ *         description: Регистрация успешно отменена
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EventWithParticipation'
+ *       400:
+ *         description: Некорректный ID мероприятия
+ *       401:
+ *         description: Пользователь не аутентифицирован
+ *       404:
+ *         description: Мероприятие не найдено или пользователь не был на него зарегистрирован
+ *       500:
+ *         description: Внутренняя ошибка сервера
+ */
+router.delete(
+  '/:eventId/register',
+  [checkBlacklist as RequestHandler, authenticateJwt as RequestHandler],
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const user = req.user as User | undefined;
+      if (!user) {
+        res.status(401).json({ message: 'Не авторизован' });
+        return;
+      }
+      const userId = user.id;
+      const eventId = parseInt(req.params.eventId, 10);
+      if (isNaN(eventId)) {
+        res.status(400).json({ message: 'Некорректный ID мероприятия' });
+        return;
+      }
+      const event = await Event.findByPk(eventId);
+      if (!event) {
+        res.status(404).json({ message: 'Мероприятие не найдено' });
+        return;
+      }
+      const participation = await EventParticipant.findOne({
+        where: { userId, eventId },
+      });
+      if (!participation) {
+        res
+          .status(404)
+          .json({ message: 'Вы не были зарегистрированы на это мероприятие' });
+        return;
+      }
+      await participation.destroy();
+      const updatedEvents = await addParticipationInfo([event], userId);
+      res.status(200).json(updatedEvents[0]);
+    } catch (error: unknown) {
+      console.error('Ошибка при отмене регистрации:', error);
+      if (!res.headersSent) {
+        res
+          .status(500)
+          .json({ message: 'Ошибка сервера при отмене регистрации' });
+      }
+    }
+  },
+);
 
 /**
  * @swagger

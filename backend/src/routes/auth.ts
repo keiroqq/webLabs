@@ -1,4 +1,4 @@
-import express, { Router, Request, Response } from 'express';
+import { Router, Request, Response, RequestHandler } from 'express';
 import ms from 'ms';
 import jwt, { Secret, JwtPayload as OfficialJwtPayload } from 'jsonwebtoken';
 import dotenv from 'dotenv';
@@ -21,7 +21,7 @@ const router: Router = Router();
 
 const JWT_EXPIRATION: string = process.env.JWT_EXPIRATION || '1h';
 const JWT_SECRET: Secret | undefined = process.env.JWT_SECRET;
-const authenticateJwt: express.Handler = passport.authenticate('jwt', {
+const authenticateJwt: RequestHandler = passport.authenticate('jwt', {
   session: false,
 });
 
@@ -226,7 +226,14 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     const token = jwt.sign(payload, JWT_SECRET!, {
       expiresIn: expiresInSeconds,
     });
-    res.status(200).json({ token: `Bearer ${token}` });
+    res.status(200).json({
+      token: `Bearer ${token}`,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+    });
   } catch (error: unknown) {
     console.error('Ошибка при входе пользователя:', error);
     if (!res.headersSent) {
@@ -328,6 +335,60 @@ router.post(
         res
           .status(500)
           .json({ message: 'Ошибка сервера при выходе из системы' });
+      }
+    }
+  },
+);
+
+/**
+ * @swagger
+ * /auth/profile:
+ *   get:
+ *     summary: Получение данных профиля текущего пользователя
+ *     tags: [Auth]
+ *     description: Возвращает информацию о пользователе (id, name, email), который аутентифицирован с помощью JWT.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Успешный ответ с данными пользователя.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Ошибка аутентификации (токен не предоставлен, недействителен, истек или в черном списке).
+ *       500:
+ *         description: Внутренняя ошибка сервера.
+ */
+router.get(
+  '/profile',
+  [checkBlacklist as RequestHandler, authenticateJwt as RequestHandler],
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const user = req.user as User | undefined;
+      if (!user || typeof user.id !== 'number') {
+        res.status(401).json({ message: 'Не авторизован' });
+        return;
+      }
+      const userProfile = await User.findByPk(user.id, {
+        attributes: { exclude: ['password'] },
+      });
+      if (!userProfile) {
+        res.status(404).json({ message: 'Пользователь не найден' });
+        return;
+      }
+      console.log(`Returning profile for user ID: ${userProfile.id}`);
+      res.status(200).json(userProfile);
+    } catch (error: unknown) {
+      console.error('Ошибка при получении профиля пользователя:', error);
+      const message =
+        error instanceof Error ? error.message : 'Unknown server error';
+      if (!res.headersSent) {
+        res.status(500).json({
+          message: 'Ошибка сервера при получении профиля',
+          details: message,
+        });
       }
     }
   },

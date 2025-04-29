@@ -12,6 +12,7 @@ import setupSwagger from '@config/swagger';
 import Event from '@models/event';
 import User from '@models/user';
 import '@models/blacklistedToken';
+import EventParticipant from '@models/eventParticipant';
 dotenv.config();
 
 const app: Application = express();
@@ -38,9 +39,27 @@ app.use('/events', eventRoutes);
 User.hasMany(Event, { foreignKey: 'createdBy', as: 'createdEvents' });
 Event.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
 
+User.belongsToMany(Event, {
+  through: EventParticipant,
+  foreignKey: 'userId',
+  otherKey: 'eventId',
+  as: 'participatingEvents',
+});
+Event.belongsToMany(User, {
+  through: EventParticipant,
+  foreignKey: 'eventId',
+  otherKey: 'userId',
+  as: 'participants',
+});
+
+Event.hasMany(EventParticipant, { foreignKey: 'eventId' });
+EventParticipant.belongsTo(Event, { foreignKey: 'eventId' });
+User.hasMany(EventParticipant, { foreignKey: 'userId' });
+EventParticipant.belongsTo(User, { foreignKey: 'userId' });
+
 (async () => {
   try {
-    await sequelize.sync({ force: false }); // force: false/true
+    await sequelize.sync({ force: true }); // force: false/true
     console.log('База данных синхронизирована.');
     await sequelize.authenticate();
     console.log('Подключение к базе данных успешно установлено.');
