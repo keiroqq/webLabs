@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional, ForeignKey } from 'sequelize';
-import sequelize from '../config/db.js';
-import User from './user.js';
+import sequelize from '@config/db';
+import User from './user';
 
 type EventCategory = 'concert' | 'lecture' | 'exhibition';
 

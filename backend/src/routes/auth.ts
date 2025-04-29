@@ -3,20 +3,18 @@ import ms from 'ms';
 import jwt, { Secret, JwtPayload as OfficialJwtPayload } from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import passport from 'passport';
 import {
   ValidationError,
   UniqueConstraintError,
   ValidationErrorItem,
 } from 'sequelize';
-import User from '../models/user.js';
-import BlacklistedToken from '../models/blacklistedToken.js';
-import checkBlacklist from '../middleware/checkBlacklist.js';
-import '../config/passport.config.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import User from '@models/user';
+import BlacklistedToken from '@models/blacklistedToken';
+import checkBlacklist from '@middleware/checkBlacklist';
+import '@config/passport.config';
+
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const router: Router = Router();

@@ -2,17 +2,16 @@ import express, { Application } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import morgan from 'morgan';
-import passport from './config/passport.config.js';
 
-import sequelize from './config/db.js';
-import eventRoutes from './routes/events.js';
-import userRoutes from './routes/users.js';
-import authRoutes from './routes/auth.js';
-import setupSwagger from './config/swagger.js';
-
-import Event from './models/event.js';
-import User from './models/user.js';
-import './models/blacklistedToken.js';
+import passport from '@config/passport.config';
+import sequelize from '@config/db';
+import eventRoutes from '@routes/events';
+import userRoutes from '@routes/users';
+import authRoutes from '@routes/auth';
+import setupSwagger from '@config/swagger';
+import Event from '@models/event';
+import User from '@models/user';
+import '@models/blacklistedToken';
 dotenv.config();
 
 const app: Application = express();
