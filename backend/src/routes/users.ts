@@ -1,6 +1,7 @@
-const express = require("express");
-const router = express.Router();
-const User = require("../models/user");
+import { Router, Request, Response } from 'express';
+import User from '../models/user.js';
+
+const router: Router = Router();
 
 /**
  * @swagger
@@ -14,7 +15,7 @@ const User = require("../models/user");
  * /users:
  *   get:
  *     summary: Получение списка всех пользователей
- *     tags: [Users] # Привязываем эндпоинт к тегу Users
+ *     tags: [Users]
  *     description: Возвращает массив всех зарегистрированных пользователей из базы данных. Поле `password` исключается из ответа.
  *     responses:
  *       200:
@@ -36,18 +37,22 @@ const User = require("../models/user");
  *                   type: string
  *                   example: "Ошибка сервера при получении пользователей"
  */
-router.get("/", async (req, res) => {
+router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
-    const users = await User.findAll({
-      attributes: ["id", "name", "email", "createdAt"],
+    const users: User[] = await User.findAll({
+      attributes: ['id', 'name', 'email', 'createdAt'],
+      raw: false,
     });
+
     res.status(200).json(users);
-  } catch (error) {
-    console.error("Ошибка при получении списка пользователей:", error);
-    res
-      .status(500)
-      .json({ message: "Ошибка сервера при получении пользователей" });
+  } catch (error: unknown) {
+    console.error('Ошибка при получении списка пользователей:', error);
+    if (!res.headersSent) {
+      res
+        .status(500)
+        .json({ message: 'Ошибка сервера при получении пользователей' });
+    }
   }
 });
 
-module.exports = router;
+export default router;
